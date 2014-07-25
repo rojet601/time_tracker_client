@@ -19,7 +19,7 @@ import org.apache.http.util.EntityUtils;
 public class HttpHelper {
 	private static CloseableHttpClient httpClient = HttpClients.createDefault();;
 	
-	public static String post(String url, NameValuePair... nvpArray) {
+	public static String post(String url, NameValuePair... nvpArray) throws IOException {
 		String body = "";
 		HttpPost httpPost = new HttpPost(url);
 		List<NameValuePair> nvps = new ArrayList<NameValuePair>();
@@ -40,8 +40,6 @@ public class HttpHelper {
 			e.printStackTrace();
 		} catch (ClientProtocolException e) {
 			e.printStackTrace();
-		} catch (IOException e) {
-			System.out.println("Ew, the server is down");
 		}
 		
 		return body;

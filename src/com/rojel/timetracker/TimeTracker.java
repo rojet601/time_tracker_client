@@ -5,12 +5,17 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 
+import javax.swing.JOptionPane;
+
 import org.apache.http.message.BasicNameValuePair;
 
 public class TimeTracker {
 	private String username;
 	private String password;
 	private String url;
+	
+	private boolean warned;
+	private long connectionLossBeginning;
 	
 	public static void main(String[] args) {
 		new TimeTracker();
@@ -28,18 +33,86 @@ public class TimeTracker {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		HttpHelper.post(url + "/start", new BasicNameValuePair("username", username), new BasicNameValuePair("password", password));
-		new Thread(new TimeTrackerRunnable(this)).start();
+		
+		warned = false;
+		connectionLossBeginning = 0;
+		
+		start();
 	}
-
+	
+	public void start() {
+		while (true) {
+			String response = "";
+			try {
+				response = HttpHelper.post(url + "/time", new BasicNameValuePair("username", username), new BasicNameValuePair("password", password));
+			} catch (IOException e) {
+				if (connectionLossBeginning == 0)
+					connectionLossBeginning = System.currentTimeMillis();
+				if (System.currentTimeMillis() - connectionLossBeginning > 5 * 60000) {
+					asyncMessage("Sorry, but we couldn't reach the server for 5 minutes so we have to log off.");
+					wait(10);
+					logout();
+				}
+				System.out.println(e.getMessage());
+				System.out.println("Can't reach the server, retrying in 10s");
+				wait(10);
+				continue;
+			}
+			
+			System.out.println(response);
+			String[] split = response.split(" ");
+			int hours = Integer.parseInt(split[0]);
+			int minutes = Integer.parseInt(split[1]);
+			int seconds = Integer.parseInt(split[2]);
+			
+			if (hours == 0 && minutes < 10) {
+				if (!warned) {
+					asyncMessage("You have less than 10 minutes left.");
+					warned = true;
+				}
+			} else
+				warned = false;
+			
+			if (hours == 0 && minutes == 0 && seconds == 0)
+				logout();
+			
+			connectionLossBeginning = 0;
+			wait(30);
+		}
+	}
+	
+	public void wait(int seconds) {
+		try {
+			Thread.sleep(seconds * 1000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void logout() {
+		try {
+			Runtime.getRuntime().exec("shutdown -l");
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+	}
+	
+	public void asyncMessage(final String text) {
+		new Thread(new Runnable() {
+			public void run() {
+				JOptionPane.showMessageDialog(null, text, "Time Tracker", JOptionPane.WARNING_MESSAGE);
+			}
+		}).start();
+	}
+	
 	public String getUsername() {
 		return username;
 	}
-
+	
 	public String getPassword() {
 		return password;
 	}
-
+	
 	public String getUrl() {
 		return url;
 	}
