@@ -24,7 +24,8 @@ public class TimeTracker {
 	
 	private Image icon;
 	
-	private boolean warned;
+	private boolean warnedTen;
+	private boolean warnedOne;
 	private long connectionLossBeginning;
 	
 	public static void main(String[] args) {
@@ -50,7 +51,8 @@ public class TimeTracker {
 			e1.printStackTrace();
 		}
 		
-		warned = false;
+		warnedTen = false;
+		warnedOne = false;
 		connectionLossBeginning = 0;
 		
 		try {
@@ -87,20 +89,34 @@ public class TimeTracker {
 			int minutes = Integer.parseInt(split[1]);
 			int seconds = Integer.parseInt(split[2]);
 			
-			if (hours == 0 && minutes < 10) {
-				if (!warned) {
+			int totalSeconds = toSeconds(hours, minutes, seconds);
+			
+			if (totalSeconds <= toSeconds(0, 10, 0)) {
+				if (!warnedTen) {
 					asyncMessage("You have less than 10 minutes left.");
-					warned = true;
+					warnedTen = true;
 				}
 			} else
-				warned = false;
+				warnedTen = false;
 			
-			if (hours == 0 && minutes == 0 && seconds == 0)
+			if (totalSeconds <= toSeconds(0, 1, 0)) {
+				if (!warnedOne) {
+					asyncMessage("You will be logged off in 1 minute.");
+					warnedOne = true;
+				}
+			} else
+				warnedOne = false;
+			
+			if (totalSeconds == 0)
 				logout();
 			
 			connectionLossBeginning = 0;
 			wait(30);
 		}
+	}
+	
+	public int toSeconds(int hours, int minutes, int seconds) {
+		return seconds + minutes * 60 + hours * 60 * 60;
 	}
 	
 	public void wait(int seconds) {
