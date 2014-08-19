@@ -1,11 +1,19 @@
 package com.rojel.timetracker;
 
+import java.awt.Dimension;
+import java.awt.Image;
+import java.awt.Toolkit;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 
+import javax.imageio.ImageIO;
+import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 
 import org.apache.http.message.BasicNameValuePair;
 
@@ -13,6 +21,8 @@ public class TimeTracker {
 	private String username;
 	private String password;
 	private String url;
+	
+	private Image icon;
 	
 	private boolean warned;
 	private long connectionLossBeginning;
@@ -34,8 +44,20 @@ public class TimeTracker {
 			e.printStackTrace();
 		}
 		
+		try {
+			icon = ImageIO.read(new File("icon.png"));
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+		
 		warned = false;
 		connectionLossBeginning = 0;
+		
+		try {
+			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e) {
+			e.printStackTrace();
+		}
 		
 		start();
 	}
@@ -100,7 +122,17 @@ public class TimeTracker {
 	public void asyncMessage(final String text) {
 		new Thread(new Runnable() {
 			public void run() {
-				JOptionPane.showMessageDialog(null, text, "Time Tracker", JOptionPane.WARNING_MESSAGE);
+				Dimension monitorSize = Toolkit.getDefaultToolkit().getScreenSize();
+				
+				JFrame frame = new JFrame("Time Tracker");
+				frame.setSize(monitorSize);
+				frame.setUndecorated(true);
+				frame.setOpacity(0.01f);
+				frame.setAlwaysOnTop(true);
+				frame.setIconImage(icon);
+				frame.setVisible(true);
+				JOptionPane.showMessageDialog(frame, text, "Time Tracker", JOptionPane.WARNING_MESSAGE);
+				frame.dispose();
 			}
 		}).start();
 	}
