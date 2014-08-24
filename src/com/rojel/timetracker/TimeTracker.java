@@ -79,6 +79,7 @@ public class TimeTracker {
 		}
 		
 		TrayIcon trayIcon = new TrayIcon(icon16);
+		trayIcon.setToolTip("Time Tracker");
 		
 		PopupMenu menu = new PopupMenu();
 		MenuItem pauseItem = new MenuItem("Pause");
